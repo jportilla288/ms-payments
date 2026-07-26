@@ -1,0 +1,139 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  // NestJS compiles to CommonJS; without this the generated client emits
+  // ESM-only code (import.meta.url) and Node refuses to load it.
+  moduleFormat = "cjs"
+  runtime      = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Transaction lifecycle. Values mirror the Wompi gateway statuses so no
+/// translation table is required between our domain and the provider.
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  VOIDED
+  ERROR
+}
+
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum DocumentType {
+  CC
+  CE
+  NIT
+  PP
+}
+
+enum CardBrand {
+  VISA
+  MASTERCARD
+  UNKNOWN
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  name          String
+  description   String
+  /// Stored in cents to avoid floating point drift and to match the gateway contract.
+  priceInCents  Int      @map("price_in_cents")
+  stock         Int
+  imageUrl      String?  @map("image_url")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  transactions Transaction[]
+
+  @@map("products")
+}
+
+model Customer {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  fullName     String       @map("full_name")
+  document     String
+  documentType DocumentType @map("document_type")
+  phoneNumber  String       @map("phone_number")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  transactions Transaction[]
+  deliveries   Delivery[]
+
+  @@index([document, documentType])
+  @@map("customers")
+}
+
+model Transaction {
+  transactionId String @id @default(uuid()) @map("transaction_id")
+
+  /// Idempotent reference sent to the gateway. Never reused.
+  reference          String            @unique
+  paymentDescription String            @map("payment_description")
+  status             TransactionStatus @default(PENDING)
+  solicitedDate      DateTime          @default(now()) @map("solicited_date")
+
+  quantity                Int
+  productAmountInCents    Int @map("product_amount_in_cents")
+  baseFeeInCents          Int @map("base_fee_in_cents")
+  deliveryFeeInCents      Int @map("delivery_fee_in_cents")
+  /// productAmount + baseFee + deliveryFee. Persisted so historic totals stay auditable.
+  amountInCents           Int @map("amount_in_cents")
+
+  /// Gateway echo. Only non-sensitive card data is ever persisted.
+  wompiTransactionId String?    @map("wompi_transaction_id")
+  statusMessage      String?    @map("status_message")
+  cardBrand          CardBrand? @map("card_brand")
+  cardLastFour       String?    @map("card_last_four")
+
+  customerId String   @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id])
+
+  delivery Delivery?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([customerId])
+  @@map("transactions")
+}
+
+model Delivery {
+  id            String         @id @default(uuid())
+  recipientName String         @map("recipient_name")
+  address       String
+  city          String
+  region        String
+  country       String         @default("CO")
+  postalCode    String?        @map("postal_code")
+  phoneNumber   String         @map("phone_number")
+  status        DeliveryStatus @default(PENDING)
+  deliveredAt   DateTime?      @map("delivered_at")
+
+  transactionId String      @unique @map("transaction_id")
+  transaction   Transaction @relation(fields: [transactionId], references: [transactionId])
+
+  customerId String   @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("deliveries")
+}
