@@ -14,7 +14,9 @@ import { toCustomerModel } from './prisma.mappers';
 export class PostgresCustomerRepository implements CustomerRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  upsertByEmail(command: UpsertCustomerCommand): ResultAsync<Customer, DomainError> {
+  upsertByEmail(
+    command: UpsertCustomerCommand,
+  ): ResultAsync<Customer, DomainError> {
     const { email, ...rest } = command;
 
     return fromPrisma(

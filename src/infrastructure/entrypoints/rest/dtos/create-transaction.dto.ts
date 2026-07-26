@@ -27,7 +27,9 @@ export class CustomerDto {
 
   @ApiProperty({ example: '1098765432' })
   @IsString()
-  @Matches(/^\d{5,15}$/, { message: 'document must contain between 5 and 15 digits' })
+  @Matches(/^\d{5,15}$/, {
+    message: 'document must contain between 5 and 15 digits',
+  })
   document!: string;
 
   @ApiProperty({ enum: DocumentTypeEnum, example: DocumentTypeEnum.CC })
@@ -36,7 +38,9 @@ export class CustomerDto {
 
   @ApiProperty({ example: '3001234567' })
   @IsString()
-  @Matches(/^\+?\d{7,15}$/, { message: 'phoneNumber must be a valid phone number' })
+  @Matches(/^\+?\d{7,15}$/, {
+    message: 'phoneNumber must be a valid phone number',
+  })
   phoneNumber!: string;
 }
 
@@ -100,7 +104,8 @@ export class CreateTransactionDto {
 
   @ApiProperty({
     example: '4242424242424242',
-    description: 'Used only to derive the brand and last four digits. Never stored in full.',
+    description:
+      'Used only to derive the brand and last four digits. Never stored in full.',
   })
   @IsString()
   @IsNotEmpty()

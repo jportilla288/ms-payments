@@ -75,7 +75,10 @@ export class DomainError {
     );
   }
 
-  static gateway(message: string, details?: Record<string, unknown>): DomainError {
+  static gateway(
+    message: string,
+    details?: Record<string, unknown>,
+  ): DomainError {
     return new DomainError(DomainErrorCode.GATEWAY_ERROR, message, details);
   }
 

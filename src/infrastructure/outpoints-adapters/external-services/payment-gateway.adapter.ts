@@ -45,7 +45,10 @@ export class WompiPaymentGatewayAdapter implements PaymentGatewayPort {
   charge(command: ChargeCommand): ResultAsync<ChargeResult, DomainError> {
     return this.fetchAcceptanceToken()
       .andThen((acceptanceToken) =>
-        this.tokenizeCard(command.card).map((cardToken) => ({ acceptanceToken, cardToken })),
+        this.tokenizeCard(command.card).map((cardToken) => ({
+          acceptanceToken,
+          cardToken,
+        })),
       )
       .andThen(({ acceptanceToken, cardToken }) =>
         this.createTransaction(command, acceptanceToken, cardToken),
@@ -57,7 +60,9 @@ export class WompiPaymentGatewayAdapter implements PaymentGatewayPort {
       );
   }
 
-  getTransactionStatus(gatewayTransactionId: string): ResultAsync<ChargeResult, DomainError> {
+  getTransactionStatus(
+    gatewayTransactionId: string,
+  ): ResultAsync<ChargeResult, DomainError> {
     return this.request<GatewayTransactionResponse>(
       `/transactions/${gatewayTransactionId}`,
       { method: 'GET', headers: this.privateHeaders() },
@@ -113,7 +118,10 @@ export class WompiPaymentGatewayAdapter implements PaymentGatewayPort {
           currency: CURRENCY,
           customer_email: command.customerEmail,
           reference: command.reference,
-          signature: this.buildIntegritySignature(command.reference, command.amountInCents),
+          signature: this.buildIntegritySignature(
+            command.reference,
+            command.amountInCents,
+          ),
           payment_method: {
             type: 'CARD',
             token: cardToken,
@@ -126,9 +134,14 @@ export class WompiPaymentGatewayAdapter implements PaymentGatewayPort {
   }
 
   /** SHA-256 of reference + amount + currency + integrity secret. */
-  private buildIntegritySignature(reference: string, amountInCents: number): string {
+  private buildIntegritySignature(
+    reference: string,
+    amountInCents: number,
+  ): string {
     return createHash('sha256')
-      .update(`${reference}${amountInCents}${CURRENCY}${this.config.integrityKey}`)
+      .update(
+        `${reference}${amountInCents}${CURRENCY}${this.config.integrityKey}`,
+      )
       .digest('hex');
   }
 
@@ -178,7 +191,10 @@ export class WompiPaymentGatewayAdapter implements PaymentGatewayPort {
     const url = `${this.config.baseUrl}${path}`;
 
     return ResultAsync.fromPromise(
-      fetch(url, { ...init, signal: AbortSignal.timeout(this.config.requestTimeoutMs) }),
+      fetch(url, {
+        ...init,
+        signal: AbortSignal.timeout(this.config.requestTimeoutMs),
+      }),
       (cause) => DomainError.gateway(`${context}: ${(cause as Error).message}`),
     ).andThen((response) =>
       ResultAsync.fromPromise(response.text(), () =>
@@ -193,7 +209,9 @@ export class WompiPaymentGatewayAdapter implements PaymentGatewayPort {
         try {
           return okAsync(JSON.parse(body) as T);
         } catch {
-          return errAsync(DomainError.gateway(`${context}: malformed JSON response.`));
+          return errAsync(
+            DomainError.gateway(`${context}: malformed JSON response.`),
+          );
         }
       }),
     );

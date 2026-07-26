@@ -18,7 +18,7 @@ export class ProductsController {
   @ApiOkResponse({ type: [ProductResponseDto] })
   async findAll(): Promise<ProductResponseDto[]> {
     const products = await unwrapOrThrow(this.listProducts.execute());
-    return products.map(ProductResponseDto.fromDomain);
+    return products.map((product) => ProductResponseDto.fromDomain(product));
   }
 
   @Get(':id')

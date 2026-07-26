@@ -19,7 +19,10 @@ import { PrismaService } from '../../infrastructure/outpoints-adapters/postgres/
     PrismaService,
     { provide: PRODUCT_REPOSITORY_PORT, useClass: PostgresProductRepository },
     { provide: CUSTOMER_REPOSITORY_PORT, useClass: PostgresCustomerRepository },
-    { provide: TRANSACTION_REPOSITORY_PORT, useClass: PostgresTransactionRepository },
+    {
+      provide: TRANSACTION_REPOSITORY_PORT,
+      useClass: PostgresTransactionRepository,
+    },
     { provide: DELIVERY_REPOSITORY_PORT, useClass: PostgresDeliveryRepository },
   ],
   exports: [

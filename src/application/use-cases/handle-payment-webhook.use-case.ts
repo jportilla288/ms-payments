@@ -47,7 +47,9 @@ export class HandlePaymentWebhookUseCase {
     private readonly eventsSecret: string,
   ) {}
 
-  execute(event: PaymentWebhookEvent): ResultAsync<Transaction | null, DomainError> {
+  execute(
+    event: PaymentWebhookEvent,
+  ): ResultAsync<Transaction | null, DomainError> {
     return this.verifySignature(event)
       .andThen(() => this.loadTransaction(event))
       .andThen((transaction) => {
@@ -65,7 +67,9 @@ export class HandlePaymentWebhookUseCase {
       });
   }
 
-  private verifySignature(event: PaymentWebhookEvent): ResultAsync<true, DomainError> {
+  private verifySignature(
+    event: PaymentWebhookEvent,
+  ): ResultAsync<true, DomainError> {
     const properties = event.signature?.properties;
     const checksum = event.signature?.checksum;
     const timestamp = event.timestamp;

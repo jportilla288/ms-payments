@@ -23,7 +23,9 @@ export class CardDto {
 
   @ApiProperty({ example: '08' })
   @IsString()
-  @Matches(/^(0[1-9]|1[0-2])$/, { message: 'expMonth must be between 01 and 12' })
+  @Matches(/^(0[1-9]|1[0-2])$/, {
+    message: 'expMonth must be between 01 and 12',
+  })
   expMonth!: string;
 
   @ApiProperty({ example: '29' })

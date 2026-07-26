@@ -25,7 +25,10 @@ export class ApiResponseDto<T> {
   @ApiProperty({ example: 5, description: 'Items included in this response.' })
   totalItemsReturned!: number;
 
-  @ApiProperty({ example: 5, description: 'Items matching the query in the database.' })
+  @ApiProperty({
+    example: 5,
+    description: 'Items matching the query in the database.',
+  })
   totalItemsInDataBase!: number;
 
   @ApiProperty({ type: [ApiErrorDto] })
@@ -39,7 +42,11 @@ export class ApiResponseDto<T> {
 }
 
 export const buildSuccessEnvelope = <T>(result: T): ApiResponseDto<T> => {
-  const count = Array.isArray(result) ? result.length : result === null || result === undefined ? 0 : 1;
+  const count = Array.isArray(result)
+    ? result.length
+    : result === null || result === undefined
+      ? 0
+      : 1;
 
   return {
     result: result ?? null,
@@ -51,7 +58,9 @@ export const buildSuccessEnvelope = <T>(result: T): ApiResponseDto<T> => {
   };
 };
 
-export const buildErrorEnvelope = (errors: ApiErrorDto[]): ApiResponseDto<null> => ({
+export const buildErrorEnvelope = (
+  errors: ApiErrorDto[],
+): ApiResponseDto<null> => ({
   result: null,
   totalItemsReturned: 0,
   totalItemsInDataBase: 0,

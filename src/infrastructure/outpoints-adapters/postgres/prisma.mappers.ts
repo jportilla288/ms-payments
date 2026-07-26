@@ -19,7 +19,14 @@ import { TransactionStatusEnum } from '../../../domain/resources/transaction-sta
  * Keeping this in one file means Prisma types never leak past the adapter.
  */
 export const toProductModel = (row: ProductRow): Product =>
-  new Product(row.id, row.name, row.description, row.priceInCents, row.stock, row.imageUrl);
+  new Product(
+    row.id,
+    row.name,
+    row.description,
+    row.priceInCents,
+    row.stock,
+    row.imageUrl,
+  );
 
 export const toCustomerModel = (row: CustomerRow): Customer =>
   new Customer(
