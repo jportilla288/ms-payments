@@ -14,8 +14,8 @@ async function bootstrap(): Promise<void> {
 
   // OWASP baseline: security headers, strict payload validation, scoped CORS.
   app.use(helmet());
-  // Production only accepts the configured origins. Development also accepts any
-  // localhost port, so the SPA works whichever port Vite happens to pick.
+  // Production only accepts the configured origins. Development also accepts
+  // any localhost port, so the SPA works whichever port Vite happens to pick.
   const configuredOrigins = (process.env.CORS_ORIGINS ?? '')
     .split(',')
     .map((value) => value.trim())
@@ -23,19 +23,31 @@ async function bootstrap(): Promise<void> {
   const isProduction = process.env.NODE_ENV === 'production';
   const LOCALHOST_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
 
+  const isOriginAllowed = (origin: string): boolean =>
+    configuredOrigins.includes(origin) ||
+    (!isProduction && LOCALHOST_ORIGIN.test(origin));
+
   app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin) {
+    origin: (
+      requestOrigin: string | undefined,
+      callback: (error: Error | null, allow?: boolean) => void,
+    ): void => {
+      // Same-origin and server-to-server calls arrive with no Origin header.
+      if (!requestOrigin) {
         callback(null, true);
         return;
       }
-      const allowed =
-        configuredOrigins.includes(origin) ||
-        (!isProduction && LOCALHOST_ORIGIN.test(origin));
-      callback(allowed ? null : new Error('Origin not allowed by CORS'), allowed);
+
+      const allowed = isOriginAllowed(requestOrigin);
+
+      callback(
+        allowed ? null : new Error('Origin not allowed by CORS'),
+        allowed,
+      );
     },
     methods: ['GET', 'POST'],
   });
+
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({
