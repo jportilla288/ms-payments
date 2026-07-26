@@ -37,7 +37,9 @@ export class ResponseEnvelopeExceptionFilter implements ExceptionFilter {
       this.logger.error('Unhandled exception', exception as Error);
     }
 
-    response.status(status).json(buildErrorEnvelope(this.toApiErrors(exception)));
+    response
+      .status(status)
+      .json(buildErrorEnvelope(this.toApiErrors(exception)));
   }
 
   private toApiErrors(exception: unknown): ApiErrorDto[] {

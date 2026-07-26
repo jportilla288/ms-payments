@@ -7,7 +7,9 @@ import { unwrapOrThrow } from '../utilities/result.helper';
 @ApiTags('webhooks')
 @Controller('webhooks')
 export class WebhooksController {
-  constructor(private readonly handlePaymentWebhook: HandlePaymentWebhookUseCase) {}
+  constructor(
+    private readonly handlePaymentWebhook: HandlePaymentWebhookUseCase,
+  ) {}
 
   @Post('payments')
   @HttpCode(HttpStatus.OK)

@@ -1,19 +1,22 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
+import type { App } from 'supertest/types';
 import { AppModule } from './../src/runner/app.module';
 
 describe('Payments API (e2e)', () => {
-  let app: INestApplication;
+  let app: INestApplication<App>;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleFixture.createNestApplication<INestApplication<App>>();
     app.setGlobalPrefix('api');
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
     await app.init();
   });
 
@@ -26,7 +29,7 @@ describe('Payments API (e2e)', () => {
       .get('/api/health')
       .expect(200)
       .expect(({ body }) => {
-        expect(body.status).toBe('ok');
+        expect((body as { status: string }).status).toBe('ok');
       });
   });
 

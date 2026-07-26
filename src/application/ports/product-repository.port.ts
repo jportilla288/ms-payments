@@ -8,5 +8,8 @@ export interface ProductRepositoryPort {
   findAll(): ResultAsync<Product[], DomainError>;
   findById(id: string): ResultAsync<Product | null, DomainError>;
   /** Atomically decrements stock; fails if not enough units remain. */
-  decrementStock(id: string, quantity: number): ResultAsync<Product, DomainError>;
+  decrementStock(
+    id: string,
+    quantity: number,
+  ): ResultAsync<Product, DomainError>;
 }

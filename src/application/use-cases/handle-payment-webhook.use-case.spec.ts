@@ -7,6 +7,11 @@ import {
 import { DomainErrorCode } from '../../domain/errors/domain-error';
 import { Transaction } from '../../domain/models/transaction.model';
 import { TransactionStatusEnum } from '../../domain/resources/transaction-status.enum';
+import type { TransactionFulfillmentService } from '../services/transaction-fulfillment.service';
+import {
+  mockFulfillmentService,
+  mockTransactionRepository,
+} from '../../test-support/mocks';
 
 const SECRET = 'events_secret';
 const TIMESTAMP = 1700000000;
@@ -29,7 +34,9 @@ const buildTransaction = (status: TransactionStatusEnum): Transaction =>
     'prod-1',
   );
 
-const buildEvent = (overrides: { status?: string; checksum?: string } = {}): PaymentWebhookEvent => {
+const buildEvent = (
+  overrides: { status?: string; checksum?: string } = {},
+): PaymentWebhookEvent => {
   const status = overrides.status ?? 'APPROVED';
   const data = {
     transaction: {
@@ -42,7 +49,9 @@ const buildEvent = (overrides: { status?: string; checksum?: string } = {}): Pay
   const properties = ['transaction.id', 'transaction.status'];
   const checksum =
     overrides.checksum ??
-    createHash('sha256').update(`gw-1${status}${TIMESTAMP}${SECRET}`).digest('hex');
+    createHash('sha256')
+      .update(`gw-1${status}${TIMESTAMP}${SECRET}`)
+      .digest('hex');
 
   return {
     event: 'transaction.updated',
@@ -53,28 +62,24 @@ const buildEvent = (overrides: { status?: string; checksum?: string } = {}): Pay
 };
 
 describe('HandlePaymentWebhookUseCase', () => {
-  let transactionRepository: any;
-  let fulfillment: any;
+  let transactionRepository: ReturnType<typeof mockTransactionRepository>;
+  let fulfillment: ReturnType<typeof mockFulfillmentService>;
   let useCase: HandlePaymentWebhookUseCase;
 
   beforeEach(() => {
-    transactionRepository = {
-      create: jest.fn(),
-      findById: jest.fn(),
-      findByReference: jest
-        .fn()
-        .mockReturnValue(okAsync(buildTransaction(TransactionStatusEnum.PENDING))),
-      updateStatus: jest.fn(),
-    };
-    fulfillment = {
-      apply: jest
-        .fn()
-        .mockReturnValue(okAsync(buildTransaction(TransactionStatusEnum.APPROVED))),
-    };
+    transactionRepository = mockTransactionRepository();
+    transactionRepository.findByReference.mockReturnValue(
+      okAsync(buildTransaction(TransactionStatusEnum.PENDING)),
+    );
+
+    fulfillment = mockFulfillmentService();
+    fulfillment.apply.mockReturnValue(
+      okAsync(buildTransaction(TransactionStatusEnum.APPROVED)),
+    );
 
     useCase = new HandlePaymentWebhookUseCase(
       transactionRepository,
-      fulfillment,
+      fulfillment as unknown as TransactionFulfillmentService,
       SECRET,
     );
   });
@@ -93,7 +98,9 @@ describe('HandlePaymentWebhookUseCase', () => {
   });
 
   it('rejects an event with a forged checksum', async () => {
-    const result = await useCase.execute(buildEvent({ checksum: 'a'.repeat(64) }));
+    const result = await useCase.execute(
+      buildEvent({ checksum: 'a'.repeat(64) }),
+    );
 
     expect(result._unsafeUnwrapErr().code).toBe(
       DomainErrorCode.INVALID_WEBHOOK_SIGNATURE,

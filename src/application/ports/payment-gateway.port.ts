@@ -34,5 +34,7 @@ export interface ChargeResult {
  */
 export interface PaymentGatewayPort {
   charge(command: ChargeCommand): ResultAsync<ChargeResult, DomainError>;
-  getTransactionStatus(gatewayTransactionId: string): ResultAsync<ChargeResult, DomainError>;
+  getTransactionStatus(
+    gatewayTransactionId: string,
+  ): ResultAsync<ChargeResult, DomainError>;
 }

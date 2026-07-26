@@ -1,5 +1,8 @@
 import { HttpStatus } from '@nestjs/common';
-import { DomainError, DomainErrorCode } from '../../../../domain/errors/domain-error';
+import {
+  DomainError,
+  DomainErrorCode,
+} from '../../../../domain/errors/domain-error';
 
 const STATUS_BY_CODE: Readonly<Record<DomainErrorCode, HttpStatus>> = {
   [DomainErrorCode.PRODUCT_NOT_FOUND]: HttpStatus.NOT_FOUND,

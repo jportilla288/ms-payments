@@ -17,7 +17,11 @@ export const unwrapOrThrow = async <T>(
     (value) => value,
     (error) => {
       throw new HttpException(
-        { code: error.code, message: error.message, details: error.details ?? null },
+        {
+          code: error.code,
+          message: error.message,
+          details: error.details ?? null,
+        },
         toHttpStatus(error),
       );
     },

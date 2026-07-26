@@ -20,7 +20,17 @@ export class WebhookSignatureService {
         payload,
       );
 
-    return value === null || value === undefined ? '' : String(value);
+    switch (typeof value) {
+      case 'string':
+        return value;
+      case 'number':
+      case 'boolean':
+      case 'bigint':
+        return value.toString();
+      default:
+        // Objects and nullish values never take part in the signature.
+        return '';
+    }
   }
 
   static buildChecksum(
@@ -30,7 +40,9 @@ export class WebhookSignatureService {
     secret: string,
   ): string {
     const concatenated = properties
-      .map((property) => WebhookSignatureService.resolveProperty(data, property))
+      .map((property) =>
+        WebhookSignatureService.resolveProperty(data, property),
+      )
       .join('');
 
     return createHash('sha256')

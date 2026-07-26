@@ -14,10 +14,40 @@ async function bootstrap(): Promise<void> {
 
   // OWASP baseline: security headers, strict payload validation, scoped CORS.
   app.use(helmet());
+  // Production only accepts the configured origins. Development also accepts
+  // any localhost port, so the SPA works whichever port Vite happens to pick.
+  const configuredOrigins = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const isProduction = process.env.NODE_ENV === 'production';
+  const LOCALHOST_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
+
+  const isOriginAllowed = (origin: string): boolean =>
+    configuredOrigins.includes(origin) ||
+    (!isProduction && LOCALHOST_ORIGIN.test(origin));
+
   app.enableCors({
-    origin: (process.env.CORS_ORIGINS ?? '*').split(',').map((value) => value.trim()),
+    origin: (
+      requestOrigin: string | undefined,
+      callback: (error: Error | null, allow?: boolean) => void,
+    ): void => {
+      // Same-origin and server-to-server calls arrive with no Origin header.
+      if (!requestOrigin) {
+        callback(null, true);
+        return;
+      }
+
+      const allowed = isOriginAllowed(requestOrigin);
+
+      callback(
+        allowed ? null : new Error('Origin not allowed by CORS'),
+        allowed,
+      );
+    },
     methods: ['GET', 'POST'],
   });
+
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({
@@ -34,11 +64,17 @@ async function bootstrap(): Promise<void> {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Payments API')
-    .setDescription('Checkout API: products, customers, transactions and deliveries.')
+    .setDescription(
+      'Checkout API: products, customers, transactions and deliveries.',
+    )
     .setVersion('1.0.0')
     .build();
 
-  SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, swaggerConfig));
+  SwaggerModule.setup(
+    'api/docs',
+    app,
+    SwaggerModule.createDocument(app, swaggerConfig),
+  );
 
   const port = Number(process.env.PORT ?? DEFAULT_PORT);
   await app.listen(port, '0.0.0.0');
