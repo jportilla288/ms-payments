@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [dev, qa, uat, prod, main, 'feature/**', 'fix/**']
+    branches: [dev, qa, uat, main, 'feature/**', 'fix/**']
   pull_request:
-    branches: [dev, qa, uat, prod, main]
+    branches: [dev, qa, uat, main]
     types: [opened, synchronize, reopened]
 
 jobs:

@@ -14,10 +14,26 @@ async function bootstrap(): Promise<void> {
 
   // OWASP baseline: security headers, strict payload validation, scoped CORS.
   app.use(helmet());
+  // Production only accepts the configured origins. Development also accepts any
+  // localhost port, so the SPA works whichever port Vite happens to pick.
+  const configuredOrigins = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const isProduction = process.env.NODE_ENV === 'production';
+  const LOCALHOST_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
+
   app.enableCors({
-    origin: (process.env.CORS_ORIGINS ?? '*')
-      .split(',')
-      .map((value) => value.trim()),
+    origin: (origin, callback) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      const allowed =
+        configuredOrigins.includes(origin) ||
+        (!isProduction && LOCALHOST_ORIGIN.test(origin));
+      callback(allowed ? null : new Error('Origin not allowed by CORS'), allowed);
+    },
     methods: ['GET', 'POST'],
   });
   app.setGlobalPrefix('api');
