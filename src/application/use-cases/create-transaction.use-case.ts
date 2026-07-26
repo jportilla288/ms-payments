@@ -66,7 +66,9 @@ export class CreateTransactionUseCase {
     private readonly deliveryRepository: DeliveryRepositoryPort,
   ) {}
 
-  execute(input: CreateTransactionInput): ResultAsync<CreateTransactionOutput, DomainError> {
+  execute(
+    input: CreateTransactionInput,
+  ): ResultAsync<CreateTransactionOutput, DomainError> {
     return this.validateQuantity(input.quantity)
       .andThen(() => this.validateCard(input.cardNumber))
       .andThen(() => this.loadAvailableProduct(input.productId, input.quantity))
@@ -76,7 +78,10 @@ export class CreateTransactionUseCase {
           .map((customer) => ({ product, customer })),
       )
       .andThen(({ product, customer }) => {
-        const amounts = AmountCalculatorService.calculate(product, input.quantity);
+        const amounts = AmountCalculatorService.calculate(
+          product,
+          input.quantity,
+        );
 
         return this.transactionRepository
           .create({
@@ -93,7 +98,11 @@ export class CreateTransactionUseCase {
       })
       .andThen(({ product, customer, transaction }) =>
         this.deliveryRepository
-          .create({ ...input.delivery, transactionId: transaction.transactionId, customerId: customer.id })
+          .create({
+            ...input.delivery,
+            transactionId: transaction.transactionId,
+            customerId: customer.id,
+          })
           .map((delivery) => ({ transaction, delivery, product })),
       );
   }
@@ -107,7 +116,9 @@ export class CreateTransactionUseCase {
   private validateCard(cardNumber: string): ResultAsync<true, DomainError> {
     return CardBrandService.isValidNumber(cardNumber)
       ? okAsync(true as const)
-      : errAsync(DomainError.invalidCard('Card number failed the Luhn checksum.'));
+      : errAsync(
+          DomainError.invalidCard('Card number failed the Luhn checksum.'),
+        );
   }
 
   private loadAvailableProduct(

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [dev, qa, uat, prod, main]
+    branches: [dev, qa, uat, main, 'feature/**', 'fix/**']
   pull_request:
-    branches: [dev, qa, uat, prod, main]
+    branches: [dev, qa, uat, main]
     types: [opened, synchronize, reopened]
 
 jobs:
@@ -29,13 +29,16 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ms_payments_test?schema=public
+      # Exposed at job level so the Sonar step can check it in its `if`
+      # (the `secrets` context is not allowed inside step conditions).
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -49,21 +52,22 @@ jobs:
       - name: Apply migrations
         run: npx prisma migrate deploy
 
+      # Runs eslint without --fix: CI must report problems, not silently patch them.
       - name: Lint
-        run: npm run lint -- --max-warnings=0
+        run: npx eslint src test --max-warnings=0
 
       - name: Unit tests with coverage
         run: npm run test:cov
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage
           path: coverage/
 
       # Skipped automatically until SONAR_TOKEN is configured in the repo secrets.
-      - name: SonarCloud scan
+      - name: SonarQube Cloud scan
         if: ${{ env.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarqube-scan-action@v5
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io

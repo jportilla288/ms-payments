@@ -16,7 +16,9 @@ import { toTransactionModel } from './prisma.mappers';
 export class PostgresTransactionRepository implements TransactionRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(command: CreateTransactionCommand): ResultAsync<Transaction, DomainError> {
+  create(
+    command: CreateTransactionCommand,
+  ): ResultAsync<Transaction, DomainError> {
     return fromPrisma(
       this.prisma.transaction.create({
         data: {
@@ -38,14 +40,18 @@ export class PostgresTransactionRepository implements TransactionRepositoryPort 
     ).map(toTransactionModel);
   }
 
-  findById(transactionId: string): ResultAsync<Transaction | null, DomainError> {
+  findById(
+    transactionId: string,
+  ): ResultAsync<Transaction | null, DomainError> {
     return fromPrisma(
       this.prisma.transaction.findUnique({ where: { transactionId } }),
       'Unable to load transaction',
     ).map((row) => (row === null ? null : toTransactionModel(row)));
   }
 
-  findByReference(reference: string): ResultAsync<Transaction | null, DomainError> {
+  findByReference(
+    reference: string,
+  ): ResultAsync<Transaction | null, DomainError> {
     return fromPrisma(
       this.prisma.transaction.findUnique({ where: { reference } }),
       'Unable to load transaction by reference',

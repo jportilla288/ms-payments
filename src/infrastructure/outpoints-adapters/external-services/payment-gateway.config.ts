@@ -13,6 +13,8 @@ export class PaymentGatewayConfig {
   readonly privateKey = process.env.PAYMENT_PRIVATE_KEY ?? '';
   readonly integrityKey = process.env.PAYMENT_INTEGRITY_KEY ?? '';
   readonly requestTimeoutMs = Number(process.env.PAYMENT_TIMEOUT_MS ?? 15000);
-  readonly pollIntervalMs = Number(process.env.PAYMENT_POLL_INTERVAL_MS ?? 1500);
+  readonly pollIntervalMs = Number(
+    process.env.PAYMENT_POLL_INTERVAL_MS ?? 1500,
+  );
   readonly maxPollAttempts = Number(process.env.PAYMENT_MAX_POLL_ATTEMPTS ?? 8);
 }

@@ -36,4 +36,5 @@ Thumbs.db
 # Local agent/IDE scratch
 .windsurf/
 .agents/
+.claude/
 skills-lock.json

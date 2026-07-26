@@ -83,6 +83,7 @@ export class DeliveryResponseDto {
 }
 
 export class CheckoutResponseDto {
-  @ApiProperty({ type: TransactionResponseDto }) transaction!: TransactionResponseDto;
+  @ApiProperty({ type: TransactionResponseDto })
+  transaction!: TransactionResponseDto;
   @ApiProperty({ type: DeliveryResponseDto }) delivery!: DeliveryResponseDto;
 }

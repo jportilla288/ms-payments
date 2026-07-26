@@ -29,7 +29,10 @@ export class PostgresProductRepository implements ProductRepositoryPort {
    * Conditional update: the `stock: { gte: quantity }` filter makes the
    * decrement atomic, so two concurrent checkouts cannot oversell.
    */
-  decrementStock(id: string, quantity: number): ResultAsync<Product, DomainError> {
+  decrementStock(
+    id: string,
+    quantity: number,
+  ): ResultAsync<Product, DomainError> {
     return fromPrisma(
       this.prisma.product.updateMany({
         where: { id, stock: { gte: quantity } },
@@ -44,7 +47,9 @@ export class PostgresProductRepository implements ProductRepositoryPort {
       )
       .andThen(() => this.findById(id))
       .andThen((product) =>
-        product === null ? errAsync(DomainError.productNotFound(id)) : okAsync(product),
+        product === null
+          ? errAsync(DomainError.productNotFound(id))
+          : okAsync(product),
       );
   }
 }

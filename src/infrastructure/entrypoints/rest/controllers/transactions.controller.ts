@@ -40,7 +40,9 @@ export class TransactionsController {
     summary: 'Create a PENDING transaction with its customer and delivery data',
   })
   @ApiCreatedResponse({ type: CheckoutResponseDto })
-  async create(@Body() dto: CreateTransactionDto): Promise<CheckoutResponseDto> {
+  async create(
+    @Body() dto: CreateTransactionDto,
+  ): Promise<CheckoutResponseDto> {
     const output = await unwrapOrThrow(this.createTransaction.execute(dto));
 
     return {

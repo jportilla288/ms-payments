@@ -35,7 +35,9 @@ export class PostgresDeliveryRepository implements DeliveryRepositoryPort {
     ).map(toDeliveryModel);
   }
 
-  findByTransactionId(transactionId: string): ResultAsync<Delivery | null, DomainError> {
+  findByTransactionId(
+    transactionId: string,
+  ): ResultAsync<Delivery | null, DomainError> {
     return fromPrisma(
       this.prisma.delivery.findUnique({ where: { transactionId } }),
       'Unable to load delivery',
@@ -47,7 +49,10 @@ export class PostgresDeliveryRepository implements DeliveryRepositoryPort {
     status: DeliveryStatusEnum,
   ): ResultAsync<Delivery, DomainError> {
     return fromPrisma(
-      this.prisma.delivery.update({ where: { transactionId }, data: { status } }),
+      this.prisma.delivery.update({
+        where: { transactionId },
+        data: { status },
+      }),
       'Unable to update delivery status',
     ).map(toDeliveryModel);
   }

@@ -15,7 +15,9 @@ export interface UpsertCustomerCommand {
 
 export interface CustomerRepositoryPort {
   /** Customers are identified by email; repeated checkouts reuse the record. */
-  upsertByEmail(command: UpsertCustomerCommand): ResultAsync<Customer, DomainError>;
+  upsertByEmail(
+    command: UpsertCustomerCommand,
+  ): ResultAsync<Customer, DomainError>;
   findById(id: string): ResultAsync<Customer | null, DomainError>;
   findByEmail(email: string): ResultAsync<Customer | null, DomainError>;
 }

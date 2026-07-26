@@ -1,6 +1,9 @@
 import { AmountCalculatorService } from './amount-calculator.service';
 import { Product } from '../models/product.model';
-import { BASE_FEE_IN_CENTS, DELIVERY_FEE_IN_CENTS } from '../resources/fees.constants';
+import {
+  BASE_FEE_IN_CENTS,
+  DELIVERY_FEE_IN_CENTS,
+} from '../resources/fees.constants';
 
 describe('AmountCalculatorService', () => {
   const product = new Product('id-1', 'Shoes', 'Nice shoes', 100_000, 10, null);
