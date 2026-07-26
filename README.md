@@ -248,19 +248,53 @@ npm test          # unit tests
 npm run test:cov  # coverage report (fails below 80%)
 ```
 
-Jest is configured with a hard **80% threshold** on branches, functions, lines
-and statements. Modules that contain no logic (NestJS modules, DTOs, ports,
-enums and `main.ts`) are excluded from the metric.
+Jest enforces a hard **80% threshold** on branches, functions, lines and
+statements. Modules that contain no logic (NestJS modules, DTOs, ports, enums,
+test fixtures and `main.ts`) are excluded from the metric.
 
-<!-- Paste the output of `npm run test:cov` here before submitting. -->
+**Result: 155 tests across 29 suites, all passing.**
+
+| Metric     | Coverage | Threshold |
+| ---------- | -------- | --------- |
+| Statements | 98.68%   | 80%       |
+| Branches   | 86.32%   | 80%       |
+| Functions  | 96.89%   | 80%       |
+| Lines      | 98.53%   | 80%       |
 
 ```
-File                        | % Stmts | % Branch | % Funcs | % Lines
-----------------------------|---------|----------|---------|--------
-All files                   |         |          |         |
+-----------------------------------------------------|---------|----------|---------|---------
+File                                                 | % Stmts | % Branch | % Funcs | % Lines
+-----------------------------------------------------|---------|----------|---------|---------
+All files                                            |   98.68 |    86.32 |   96.89 |   98.53
+ application/services                                |     100 |      100 |     100 |     100
+ application/use-cases                               |   99.23 |    91.83 |     100 |   99.14
+ domain/errors                                       |     100 |      100 |     100 |     100
+ domain/models                                       |     100 |      100 |     100 |     100
+ domain/services                                     |   98.07 |    93.54 |     100 |   98.03
+ infrastructure/entrypoints/rest/controllers         |     100 |       75 |     100 |     100
+ infrastructure/entrypoints/rest/utilities           |     100 |       95 |     100 |     100
+ infrastructure/outpoints-adapters/external-services |   96.87 |    96.77 |   92.85 |   96.55
+ infrastructure/outpoints-adapters/postgres          |    96.7 |    73.68 |   91.66 |   96.05
+ utilities                                           |     100 |      100 |     100 |     100
+-----------------------------------------------------|---------|----------|---------|---------
 ```
 
----
+### What is covered
+
+- **Domain** — Luhn validation, VISA/Mastercard detection (including the
+  2221-2720 range), fee breakdown, transaction state rules, and the webhook
+  signature algorithm with tampered-amount and foreign-secret cases.
+- **Use cases** — every failure branch: missing product, insufficient stock,
+  invalid card, already finalized transaction, orphaned customer, and a gateway
+  outage that must leave the transaction in `ERROR` rather than stuck in
+  `PENDING`.
+- **Persistence adapters** — all four repositories against a mocked Prisma
+  client, including the conditional `stock >= quantity` update that prevents
+  overselling.
+- **Gateway adapter** — the full handshake with a mocked `fetch`: acceptance
+  token, tokenisation, integrity signature, status polling, exhausted retries,
+  HTTP errors, network failures and malformed JSON. One test asserts that the
+  card number never appears in the transaction request body.
 
 ## Security
 

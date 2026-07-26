@@ -1,7 +1,9 @@
 import { CardBrandEnum } from '../resources/card-brand.enum';
 
 const VISA_PATTERN = /^4\d{12}(\d{3})?(\d{3})?$/;
-const MASTERCARD_PATTERN = /^(5[1-5]\d{14}|2(2[2-9]\d{12}|[3-6]\d{13}|7[01]\d{12}|720\d{12}))$/;
+// Classic 51-55 range plus the 2221-2720 range introduced in 2017.
+const MASTERCARD_PATTERN =
+  /^(5[1-5]\d{14}|222[1-9]\d{12}|22[3-9]\d{13}|2[3-6]\d{14}|27[01]\d{13}|2720\d{12})$/;
 
 /**
  * Pure card helpers. No framework, no I/O: fully unit-testable and reused by

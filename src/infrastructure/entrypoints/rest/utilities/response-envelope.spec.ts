@@ -99,6 +99,32 @@ describe('response envelope', () => {
       expect(json.mock.calls[0][0].errors[0].code).toBe('VALIDATION_ERROR');
     });
 
+    it('handles an exception whose body is a plain string', () => {
+      const { host, json } = buildHost();
+
+      new ResponseEnvelopeExceptionFilter().catch(
+        new HttpException('Forbidden resource', HttpStatus.FORBIDDEN),
+        host as never,
+      );
+
+      expect(json.mock.calls[0][0].errors[0]).toEqual({
+        code: 'INTERNAL_ERROR',
+        message: 'Forbidden resource',
+        details: null,
+      });
+    });
+
+    it('falls back to the exception message when the body has no message', () => {
+      const { host, json } = buildHost();
+
+      new ResponseEnvelopeExceptionFilter().catch(
+        new HttpException({ code: 'X' }, HttpStatus.BAD_REQUEST),
+        host as never,
+      );
+
+      expect(json.mock.calls[0][0].errors[0].code).toBe('X');
+    });
+
     it('hides the detail of unexpected exceptions', () => {
       const { host, status, json } = buildHost();
 
