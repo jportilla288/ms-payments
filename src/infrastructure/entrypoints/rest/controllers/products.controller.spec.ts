@@ -20,7 +20,11 @@ describe('ProductsController', () => {
     const response = await controller.findAll();
 
     expect(response).toEqual([
-      expect.objectContaining({ id: 'prod-1', priceInCents: 100_000, stock: 10 }),
+      expect.objectContaining({
+        id: 'prod-1',
+        priceInCents: 100_000,
+        stock: 10,
+      }),
     ]);
   });
 
@@ -31,7 +35,9 @@ describe('ProductsController', () => {
   });
 
   it('turns a domain failure into an HttpException', async () => {
-    getProduct.execute.mockReturnValue(errAsync(DomainError.productNotFound('x')));
+    getProduct.execute.mockReturnValue(
+      errAsync(DomainError.productNotFound('x')),
+    );
 
     await expect(controller.findOne('x')).rejects.toBeInstanceOf(HttpException);
   });

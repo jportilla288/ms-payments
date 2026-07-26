@@ -22,7 +22,7 @@ describe('prisma mappers', () => {
       imageUrl: null,
       createdAt: now,
       updatedAt: now,
-    } as never);
+    });
 
     expect(product.hasStockFor(3)).toBe(true);
     expect(product.imageUrl).toBeNull();

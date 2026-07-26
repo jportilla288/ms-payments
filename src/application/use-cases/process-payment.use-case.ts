@@ -6,7 +6,10 @@ import { TransactionStatusEnum } from '../../domain/resources/transaction-status
 import { CUSTOMER_REPOSITORY_PORT } from '../ports/customer-repository.port';
 import type { CustomerRepositoryPort } from '../ports/customer-repository.port';
 import { PAYMENT_GATEWAY_PORT } from '../ports/payment-gateway.port';
-import type { CardDetails, PaymentGatewayPort } from '../ports/payment-gateway.port';
+import type {
+  CardDetails,
+  PaymentGatewayPort,
+} from '../ports/payment-gateway.port';
 import { TRANSACTION_REPOSITORY_PORT } from '../ports/transaction-repository.port';
 import type { TransactionRepositoryPort } from '../ports/transaction-repository.port';
 import {
@@ -44,7 +47,10 @@ export class ProcessPaymentUseCase {
   execute(input: ProcessPaymentInput): ResultAsync<Transaction, DomainError> {
     return this.loadPendingTransaction(input.transactionId)
       .andThen((transaction) =>
-        this.charge(transaction, input).map((outcome) => ({ transaction, outcome })),
+        this.charge(transaction, input).map((outcome) => ({
+          transaction,
+          outcome,
+        })),
       )
       .andThen(({ transaction, outcome }) =>
         this.fulfillment.apply(transaction, outcome),
@@ -54,15 +60,19 @@ export class ProcessPaymentUseCase {
   private loadPendingTransaction(
     transactionId: string,
   ): ResultAsync<Transaction, DomainError> {
-    return this.transactionRepository.findById(transactionId).andThen((transaction) => {
-      if (transaction === null) {
-        return errAsync(DomainError.transactionNotFound(transactionId));
-      }
-      if (transaction.isFinalized()) {
-        return errAsync(DomainError.transactionAlreadyFinalized(transaction.status));
-      }
-      return okAsync(transaction);
-    });
+    return this.transactionRepository
+      .findById(transactionId)
+      .andThen((transaction) => {
+        if (transaction === null) {
+          return errAsync(DomainError.transactionNotFound(transactionId));
+        }
+        if (transaction.isFinalized()) {
+          return errAsync(
+            DomainError.transactionAlreadyFinalized(transaction.status),
+          );
+        }
+        return okAsync(transaction);
+      });
   }
 
   private charge(
@@ -74,7 +84,9 @@ export class ProcessPaymentUseCase {
       .andThen((customer) =>
         customer === null
           ? errAsync(
-              DomainError.persistence('Customer attached to the transaction is missing.'),
+              DomainError.persistence(
+                'Customer attached to the transaction is missing.',
+              ),
             )
           : okAsync(customer.email),
       )

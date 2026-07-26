@@ -1,5 +1,8 @@
 import { errAsync, okAsync } from 'neverthrow';
-import { CreateTransactionUseCase, CreateTransactionInput } from './create-transaction.use-case';
+import {
+  CreateTransactionUseCase,
+  CreateTransactionInput,
+} from './create-transaction.use-case';
 import { DomainError, DomainErrorCode } from '../../domain/errors/domain-error';
 import { Customer } from '../../domain/models/customer.model';
 import { Delivery } from '../../domain/models/delivery.model';
@@ -8,6 +11,12 @@ import { Transaction } from '../../domain/models/transaction.model';
 import { CardBrandEnum } from '../../domain/resources/card-brand.enum';
 import { DeliveryStatusEnum } from '../../domain/resources/delivery-status.enum';
 import { DocumentTypeEnum } from '../../domain/resources/document-type.enum';
+import {
+  mockCustomerRepository,
+  mockDeliveryRepository,
+  mockProductRepository,
+  mockTransactionRepository,
+} from '../../test-support/mocks';
 import { TransactionStatusEnum } from '../../domain/resources/transaction-status.enum';
 
 const product = new Product('prod-1', 'Shoes', 'Nice shoes', 100_000, 10, null);
@@ -52,7 +61,9 @@ const delivery = new Delivery(
   DeliveryStatusEnum.PENDING,
 );
 
-const buildInput = (overrides: Partial<CreateTransactionInput> = {}): CreateTransactionInput => ({
+const buildInput = (
+  overrides: Partial<CreateTransactionInput> = {},
+): CreateTransactionInput => ({
   productId: 'prod-1',
   quantity: 1,
   customer: {
@@ -75,33 +86,24 @@ const buildInput = (overrides: Partial<CreateTransactionInput> = {}): CreateTran
 });
 
 describe('CreateTransactionUseCase', () => {
-  let productRepository: any;
-  let customerRepository: any;
-  let transactionRepository: any;
-  let deliveryRepository: any;
+  let productRepository: ReturnType<typeof mockProductRepository>;
+  let customerRepository: ReturnType<typeof mockCustomerRepository>;
+  let transactionRepository: ReturnType<typeof mockTransactionRepository>;
+  let deliveryRepository: ReturnType<typeof mockDeliveryRepository>;
   let useCase: CreateTransactionUseCase;
 
   beforeEach(() => {
-    productRepository = {
-      findAll: jest.fn(),
-      findById: jest.fn().mockReturnValue(okAsync(product)),
-      decrementStock: jest.fn(),
-    };
-    customerRepository = {
-      upsertByEmail: jest.fn().mockReturnValue(okAsync(customer)),
-      findById: jest.fn(),
-      findByEmail: jest.fn(),
-    };
-    transactionRepository = {
-      create: jest.fn().mockReturnValue(okAsync(transaction)),
-      findById: jest.fn(),
-      updateStatus: jest.fn(),
-    };
-    deliveryRepository = {
-      create: jest.fn().mockReturnValue(okAsync(delivery)),
-      findByTransactionId: jest.fn(),
-      updateStatus: jest.fn(),
-    };
+    productRepository = mockProductRepository();
+    productRepository.findById.mockReturnValue(okAsync(product));
+
+    customerRepository = mockCustomerRepository();
+    customerRepository.upsertByEmail.mockReturnValue(okAsync(customer));
+
+    transactionRepository = mockTransactionRepository();
+    transactionRepository.create.mockReturnValue(okAsync(transaction));
+
+    deliveryRepository = mockDeliveryRepository();
+    deliveryRepository.create.mockReturnValue(okAsync(delivery));
 
     useCase = new CreateTransactionUseCase(
       productRepository,
@@ -124,7 +126,10 @@ describe('CreateTransactionUseCase', () => {
     await useCase.execute(buildInput());
 
     expect(transactionRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({ cardBrand: CardBrandEnum.VISA, cardLastFour: '4242' }),
+      expect.objectContaining({
+        cardBrand: CardBrandEnum.VISA,
+        cardLastFour: '4242',
+      }),
     );
   });
 
@@ -132,12 +137,16 @@ describe('CreateTransactionUseCase', () => {
     const result = await useCase.execute(buildInput({ quantity: 0 }));
 
     expect(result.isErr()).toBe(true);
-    expect(result._unsafeUnwrapErr().code).toBe(DomainErrorCode.INVALID_QUANTITY);
+    expect(result._unsafeUnwrapErr().code).toBe(
+      DomainErrorCode.INVALID_QUANTITY,
+    );
     expect(productRepository.findById).not.toHaveBeenCalled();
   });
 
   it('fails when the card number does not pass the Luhn checksum', async () => {
-    const result = await useCase.execute(buildInput({ cardNumber: '4242424242424241' }));
+    const result = await useCase.execute(
+      buildInput({ cardNumber: '4242424242424241' }),
+    );
 
     expect(result._unsafeUnwrapErr().code).toBe(DomainErrorCode.INVALID_CARD);
   });
@@ -147,13 +156,17 @@ describe('CreateTransactionUseCase', () => {
 
     const result = await useCase.execute(buildInput());
 
-    expect(result._unsafeUnwrapErr().code).toBe(DomainErrorCode.PRODUCT_NOT_FOUND);
+    expect(result._unsafeUnwrapErr().code).toBe(
+      DomainErrorCode.PRODUCT_NOT_FOUND,
+    );
   });
 
   it('fails when the requested quantity exceeds the available stock', async () => {
     const result = await useCase.execute(buildInput({ quantity: 99 }));
 
-    expect(result._unsafeUnwrapErr().code).toBe(DomainErrorCode.INSUFFICIENT_STOCK);
+    expect(result._unsafeUnwrapErr().code).toBe(
+      DomainErrorCode.INSUFFICIENT_STOCK,
+    );
   });
 
   it('propagates persistence failures on the error track', async () => {
@@ -163,6 +176,8 @@ describe('CreateTransactionUseCase', () => {
 
     const result = await useCase.execute(buildInput());
 
-    expect(result._unsafeUnwrapErr().code).toBe(DomainErrorCode.PERSISTENCE_ERROR);
+    expect(result._unsafeUnwrapErr().code).toBe(
+      DomainErrorCode.PERSISTENCE_ERROR,
+    );
   });
 });

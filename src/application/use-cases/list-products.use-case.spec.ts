@@ -5,7 +5,9 @@ import { aProduct } from '../../test-support/builders';
 
 describe('ListProductsUseCase', () => {
   it('returns the catalogue', async () => {
-    const repository = { findAll: jest.fn().mockReturnValue(okAsync([aProduct()])) };
+    const repository = {
+      findAll: jest.fn().mockReturnValue(okAsync([aProduct()])),
+    };
 
     const result = await new ListProductsUseCase(repository as never).execute();
 
@@ -14,11 +16,15 @@ describe('ListProductsUseCase', () => {
 
   it('propagates a persistence failure', async () => {
     const repository = {
-      findAll: jest.fn().mockReturnValue(errAsync(DomainError.persistence('down'))),
+      findAll: jest
+        .fn()
+        .mockReturnValue(errAsync(DomainError.persistence('down'))),
     };
 
     const result = await new ListProductsUseCase(repository as never).execute();
 
-    expect(result._unsafeUnwrapErr().code).toBe(DomainErrorCode.PERSISTENCE_ERROR);
+    expect(result._unsafeUnwrapErr().code).toBe(
+      DomainErrorCode.PERSISTENCE_ERROR,
+    );
   });
 });

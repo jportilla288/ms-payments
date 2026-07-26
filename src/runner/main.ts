@@ -15,7 +15,9 @@ async function bootstrap(): Promise<void> {
   // OWASP baseline: security headers, strict payload validation, scoped CORS.
   app.use(helmet());
   app.enableCors({
-    origin: (process.env.CORS_ORIGINS ?? '*').split(',').map((value) => value.trim()),
+    origin: (process.env.CORS_ORIGINS ?? '*')
+      .split(',')
+      .map((value) => value.trim()),
     methods: ['GET', 'POST'],
   });
   app.setGlobalPrefix('api');
@@ -34,11 +36,17 @@ async function bootstrap(): Promise<void> {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Payments API')
-    .setDescription('Checkout API: products, customers, transactions and deliveries.')
+    .setDescription(
+      'Checkout API: products, customers, transactions and deliveries.',
+    )
     .setVersion('1.0.0')
     .build();
 
-  SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, swaggerConfig));
+  SwaggerModule.setup(
+    'api/docs',
+    app,
+    SwaggerModule.createDocument(app, swaggerConfig),
+  );
 
   const port = Number(process.env.PORT ?? DEFAULT_PORT);
   await app.listen(port, '0.0.0.0');

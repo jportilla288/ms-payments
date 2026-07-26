@@ -9,9 +9,14 @@ describe('fromPrisma', () => {
   });
 
   it('wraps a rejection as a persistence error with its context', async () => {
-    const result = await fromPrisma(Promise.reject(new Error('boom')), 'Unable to read');
+    const result = await fromPrisma(
+      Promise.reject(new Error('boom')),
+      'Unable to read',
+    );
 
-    expect(result._unsafeUnwrapErr().code).toBe(DomainErrorCode.PERSISTENCE_ERROR);
+    expect(result._unsafeUnwrapErr().code).toBe(
+      DomainErrorCode.PERSISTENCE_ERROR,
+    );
     expect(result._unsafeUnwrapErr().message).toBe('Unable to read: boom');
   });
 });

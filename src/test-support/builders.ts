@@ -10,7 +10,14 @@ import { TransactionStatusEnum } from '../domain/resources/transaction-status.en
 /** Shared fixtures so specs stay focused on behaviour instead of setup. */
 
 export const aProduct = (stock = 10): Product =>
-  new Product('prod-1', 'Pro Running Shoes', 'Nice shoes', 100_000, stock, null);
+  new Product(
+    'prod-1',
+    'Pro Running Shoes',
+    'Nice shoes',
+    100_000,
+    stock,
+    null,
+  );
 
 export const aCustomer = (): Customer =>
   new Customer(

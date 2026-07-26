@@ -23,7 +23,9 @@ describe('DomainError', () => {
   });
 
   it('builds an invalid quantity error', () => {
-    expect(DomainError.invalidQuantity(0).code).toBe(DomainErrorCode.INVALID_QUANTITY);
+    expect(DomainError.invalidQuantity(0).code).toBe(
+      DomainErrorCode.INVALID_QUANTITY,
+    );
   });
 
   it('builds an invalid card error with the given reason', () => {

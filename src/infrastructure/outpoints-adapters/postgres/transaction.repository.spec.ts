@@ -1,4 +1,6 @@
 import { PostgresTransactionRepository } from './transaction.repository';
+import { mockPrismaDelegate } from '../../../test-support/mocks';
+import type { PrismaService } from './prisma.service';
 import { DomainErrorCode } from '../../../domain/errors/domain-error';
 import { CardBrandEnum } from '../../../domain/resources/card-brand.enum';
 import { TransactionStatusEnum } from '../../../domain/resources/transaction-status.enum';
@@ -25,18 +27,17 @@ const row = {
 };
 
 describe('PostgresTransactionRepository', () => {
-  let prisma: any;
+  let prisma: { transaction: ReturnType<typeof mockPrismaDelegate> };
   let repository: PostgresTransactionRepository;
 
   beforeEach(() => {
-    prisma = {
-      transaction: {
-        create: jest.fn().mockResolvedValue(row),
-        findUnique: jest.fn().mockResolvedValue(row),
-        update: jest.fn().mockResolvedValue({ ...row, status: 'APPROVED' }),
-      },
-    };
-    repository = new PostgresTransactionRepository(prisma);
+    prisma = { transaction: mockPrismaDelegate() };
+    prisma.transaction.create.mockResolvedValue(row);
+    prisma.transaction.findUnique.mockResolvedValue(row);
+    prisma.transaction.update.mockResolvedValue({ ...row, status: 'APPROVED' });
+    repository = new PostgresTransactionRepository(
+      prisma as unknown as PrismaService,
+    );
   });
 
   it('always creates transactions in PENDING', async () => {
@@ -57,7 +58,9 @@ describe('PostgresTransactionRepository', () => {
     });
 
     expect(prisma.transaction.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ status: TransactionStatusEnum.PENDING }),
+      data: expect.objectContaining({
+        status: TransactionStatusEnum.PENDING,
+      }) as unknown,
     });
   });
 
@@ -106,6 +109,8 @@ describe('PostgresTransactionRepository', () => {
       cardLastFour: '4242',
     });
 
-    expect(result._unsafeUnwrapErr().code).toBe(DomainErrorCode.PERSISTENCE_ERROR);
+    expect(result._unsafeUnwrapErr().code).toBe(
+      DomainErrorCode.PERSISTENCE_ERROR,
+    );
   });
 });

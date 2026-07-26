@@ -58,7 +58,11 @@ export class CardBrandService {
     return CardBrandService.sanitize(cardNumber).slice(-4);
   }
 
-  static isNotExpired(expMonth: string, expYear: string, now: Date = new Date()): boolean {
+  static isNotExpired(
+    expMonth: string,
+    expYear: string,
+    now: Date = new Date(),
+  ): boolean {
     const month = Number(expMonth);
     const year = Number(expYear);
 

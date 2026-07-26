@@ -4,25 +4,29 @@ import { DomainError, DomainErrorCode } from '../../domain/errors/domain-error';
 import { DeliveryStatusEnum } from '../../domain/resources/delivery-status.enum';
 import { TransactionStatusEnum } from '../../domain/resources/transaction-status.enum';
 import { aDelivery, aProduct, aTransaction } from '../../test-support/builders';
+import {
+  mockDeliveryRepository,
+  mockProductRepository,
+  mockTransactionRepository,
+} from '../../test-support/mocks';
 
 describe('TransactionFulfillmentService', () => {
-  let transactionRepository: any;
-  let productRepository: any;
-  let deliveryRepository: any;
+  let transactionRepository: ReturnType<typeof mockTransactionRepository>;
+  let productRepository: ReturnType<typeof mockProductRepository>;
+  let deliveryRepository: ReturnType<typeof mockDeliveryRepository>;
   let service: TransactionFulfillmentService;
 
   beforeEach(() => {
-    transactionRepository = {
-      updateStatus: jest
-        .fn()
-        .mockReturnValue(okAsync(aTransaction(TransactionStatusEnum.APPROVED))),
-    };
-    productRepository = {
-      decrementStock: jest.fn().mockReturnValue(okAsync(aProduct(9))),
-    };
-    deliveryRepository = {
-      updateStatus: jest.fn().mockReturnValue(okAsync(aDelivery())),
-    };
+    transactionRepository = mockTransactionRepository();
+    transactionRepository.updateStatus.mockReturnValue(
+      okAsync(aTransaction(TransactionStatusEnum.APPROVED)),
+    );
+
+    productRepository = mockProductRepository();
+    productRepository.decrementStock.mockReturnValue(okAsync(aProduct(9)));
+
+    deliveryRepository = mockDeliveryRepository();
+    deliveryRepository.updateStatus.mockReturnValue(okAsync(aDelivery()));
 
     service = new TransactionFulfillmentService(
       transactionRepository,
@@ -67,10 +71,16 @@ describe('TransactionFulfillmentService', () => {
   });
 
   it('records the gateway identifier on the transaction', async () => {
-    await service.apply(aTransaction(), outcome(TransactionStatusEnum.APPROVED));
+    await service.apply(
+      aTransaction(),
+      outcome(TransactionStatusEnum.APPROVED),
+    );
 
     expect(transactionRepository.updateStatus).toHaveBeenCalledWith(
-      expect.objectContaining({ transactionId: 'tx-1', wompiTransactionId: 'gw-1' }),
+      expect.objectContaining({
+        transactionId: 'tx-1',
+        wompiTransactionId: 'gw-1',
+      }),
     );
   });
 
@@ -84,6 +94,8 @@ describe('TransactionFulfillmentService', () => {
       outcome(TransactionStatusEnum.APPROVED),
     );
 
-    expect(result._unsafeUnwrapErr().code).toBe(DomainErrorCode.INSUFFICIENT_STOCK);
+    expect(result._unsafeUnwrapErr().code).toBe(
+      DomainErrorCode.INSUFFICIENT_STOCK,
+    );
   });
 });

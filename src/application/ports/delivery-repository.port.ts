@@ -19,7 +19,9 @@ export interface CreateDeliveryCommand {
 
 export interface DeliveryRepositoryPort {
   create(command: CreateDeliveryCommand): ResultAsync<Delivery, DomainError>;
-  findByTransactionId(transactionId: string): ResultAsync<Delivery | null, DomainError>;
+  findByTransactionId(
+    transactionId: string,
+  ): ResultAsync<Delivery | null, DomainError>;
   updateStatus(
     transactionId: string,
     status: DeliveryStatusEnum,

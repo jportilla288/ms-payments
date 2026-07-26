@@ -1,6 +1,10 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
+import type { ApiResponseDto } from '../dtos/api-response.dto';
 import { of } from 'rxjs';
-import { buildErrorEnvelope, buildSuccessEnvelope } from '../dtos/api-response.dto';
+import {
+  buildErrorEnvelope,
+  buildSuccessEnvelope,
+} from '../dtos/api-response.dto';
 import { ResponseEnvelopeExceptionFilter } from './response-envelope.filter';
 import { ResponseEnvelopeInterceptor } from './response-envelope.interceptor';
 
@@ -43,7 +47,7 @@ describe('response envelope', () => {
       const interceptor = new ResponseEnvelopeInterceptor();
       const next = { handle: () => of([{ id: 1 }]) };
 
-      interceptor.intercept({} as never, next as never).subscribe((envelope) => {
+      interceptor.intercept({} as never, next).subscribe((envelope) => {
         expect(envelope.isSuccess).toBe(true);
         expect(envelope.totalItemsReturned).toBe(1);
         done();
@@ -52,6 +56,9 @@ describe('response envelope', () => {
   });
 
   describe('ResponseEnvelopeExceptionFilter', () => {
+    const envelopeOf = (json: jest.Mock): ApiResponseDto<null> =>
+      (json.mock.calls as unknown[][])[0][0] as ApiResponseDto<null>;
+
     const buildHost = () => {
       const json = jest.fn();
       const status = jest.fn().mockReturnValue({ json });
@@ -66,7 +73,11 @@ describe('response envelope', () => {
 
       new ResponseEnvelopeExceptionFilter().catch(
         new HttpException(
-          { code: 'PRODUCT_NOT_FOUND', message: 'missing', details: { id: '1' } },
+          {
+            code: 'PRODUCT_NOT_FOUND',
+            message: 'missing',
+            details: { id: '1' },
+          },
           HttpStatus.NOT_FOUND,
         ),
         host as never,
@@ -78,7 +89,11 @@ describe('response envelope', () => {
           isSuccess: false,
           hasErrors: true,
           errors: [
-            { code: 'PRODUCT_NOT_FOUND', message: 'missing', details: { id: '1' } },
+            {
+              code: 'PRODUCT_NOT_FOUND',
+              message: 'missing',
+              details: { id: '1' },
+            },
           ],
         }),
       );
@@ -95,8 +110,8 @@ describe('response envelope', () => {
         host as never,
       );
 
-      expect(json.mock.calls[0][0].errors).toHaveLength(2);
-      expect(json.mock.calls[0][0].errors[0].code).toBe('VALIDATION_ERROR');
+      expect(envelopeOf(json).errors).toHaveLength(2);
+      expect(envelopeOf(json).errors[0].code).toBe('VALIDATION_ERROR');
     });
 
     it('handles an exception whose body is a plain string', () => {
@@ -107,7 +122,7 @@ describe('response envelope', () => {
         host as never,
       );
 
-      expect(json.mock.calls[0][0].errors[0]).toEqual({
+      expect(envelopeOf(json).errors[0]).toEqual({
         code: 'INTERNAL_ERROR',
         message: 'Forbidden resource',
         details: null,
@@ -122,17 +137,20 @@ describe('response envelope', () => {
         host as never,
       );
 
-      expect(json.mock.calls[0][0].errors[0].code).toBe('X');
+      expect(envelopeOf(json).errors[0].code).toBe('X');
     });
 
     it('hides the detail of unexpected exceptions', () => {
       const { host, status, json } = buildHost();
 
-      new ResponseEnvelopeExceptionFilter().catch(new Error('secret'), host as never);
+      new ResponseEnvelopeExceptionFilter().catch(
+        new Error('secret'),
+        host as never,
+      );
 
       expect(status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
-      expect(json.mock.calls[0][0].errors[0].code).toBe('INTERNAL_ERROR');
-      expect(json.mock.calls[0][0].errors[0].message).not.toContain('secret');
+      expect(envelopeOf(json).errors[0].code).toBe('INTERNAL_ERROR');
+      expect(envelopeOf(json).errors[0].message).not.toContain('secret');
     });
   });
 });

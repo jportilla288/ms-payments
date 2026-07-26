@@ -14,7 +14,9 @@ const acceptance = {
   data: { presigned_acceptance: { acceptance_token: 'acc-token' } },
 };
 const cardToken = { data: { id: 'tok_test_1' } };
-const approved = { data: { id: 'gw-1', status: 'APPROVED', status_message: null } };
+const approved = {
+  data: { id: 'gw-1', status: 'APPROVED', status_message: null },
+};
 
 describe('WompiPaymentGatewayAdapter', () => {
   let config: PaymentGatewayConfig;
@@ -38,7 +40,7 @@ describe('WompiPaymentGatewayAdapter', () => {
       requestTimeoutMs: 5000,
       pollIntervalMs: 1,
       maxPollAttempts: 3,
-    } as PaymentGatewayConfig;
+    };
 
     fetchMock = jest.fn();
     global.fetch = fetchMock as never;
@@ -46,6 +48,20 @@ describe('WompiPaymentGatewayAdapter', () => {
   });
 
   afterEach(() => jest.restoreAllMocks());
+
+  const callArgs = (call: number): unknown[] =>
+    (fetchMock.mock.calls as unknown[][])[call];
+
+  const requestUrl = (call: number): string => callArgs(call)[0] as string;
+
+  const requestInit = (call: number): RequestInit =>
+    callArgs(call)[1] as RequestInit;
+
+  const requestBody = (call: number): Record<string, unknown> =>
+    JSON.parse(requestInit(call).body as string) as Record<string, unknown>;
+
+  const requestHeaders = (call: number): Record<string, string> =>
+    requestInit(call).headers as Record<string, string>;
 
   it('completes the handshake and returns the final status', async () => {
     fetchMock
@@ -71,7 +87,7 @@ describe('WompiPaymentGatewayAdapter', () => {
 
     await adapter.charge(command);
 
-    const body = JSON.parse(fetchMock.mock.calls[2][1].body);
+    const body = requestBody(2);
 
     expect(body.signature).toMatch(/^[a-f0-9]{64}$/);
     expect(body.reference).toBe('TX-REF');
@@ -91,12 +107,14 @@ describe('WompiPaymentGatewayAdapter', () => {
 
     await adapter.charge(command);
 
-    expect(fetchMock.mock.calls[1][0]).toContain('/tokens/cards');
-    expect(fetchMock.mock.calls[2][1].body).not.toContain('4242424242424242');
+    expect(requestUrl(1)).toContain('/tokens/cards');
+    expect(requestInit(2).body).not.toContain('4242424242424242');
   });
 
   it('polls while the transaction stays pending', async () => {
-    const pending = { data: { id: 'gw-1', status: 'PENDING', status_message: null } };
+    const pending = {
+      data: { id: 'gw-1', status: 'PENDING', status_message: null },
+    };
 
     fetchMock
       .mockResolvedValueOnce(jsonResponse(acceptance))
@@ -111,7 +129,9 @@ describe('WompiPaymentGatewayAdapter', () => {
   });
 
   it('gives up polling after the configured attempts', async () => {
-    const pending = { data: { id: 'gw-1', status: 'PENDING', status_message: null } };
+    const pending = {
+      data: { id: 'gw-1', status: 'PENDING', status_message: null },
+    };
 
     fetchMock
       .mockResolvedValueOnce(jsonResponse(acceptance))
@@ -128,7 +148,9 @@ describe('WompiPaymentGatewayAdapter', () => {
       .mockResolvedValueOnce(jsonResponse(acceptance))
       .mockResolvedValueOnce(jsonResponse(cardToken))
       .mockResolvedValueOnce(
-        jsonResponse({ data: { id: 'gw-1', status: 'WEIRD', status_message: 'x' } }),
+        jsonResponse({
+          data: { id: 'gw-1', status: 'WEIRD', status_message: 'x' },
+        }),
       );
 
     const result = await adapter.charge(command);
@@ -137,7 +159,9 @@ describe('WompiPaymentGatewayAdapter', () => {
   });
 
   it('fails when the gateway answers with an HTTP error', async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ error: 'nope' }, false, 401));
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ error: 'nope' }, false, 401),
+    );
 
     const result = await adapter.charge(command);
 
@@ -171,8 +195,6 @@ describe('WompiPaymentGatewayAdapter', () => {
     const result = await adapter.getTransactionStatus('gw-1');
 
     expect(result._unsafeUnwrap().gatewayTransactionId).toBe('gw-1');
-    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe(
-      'Bearer prv_test_key',
-    );
+    expect(requestHeaders(0).Authorization).toBe('Bearer prv_test_key');
   });
 });

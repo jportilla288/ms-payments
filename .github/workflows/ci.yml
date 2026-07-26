@@ -31,11 +31,11 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ms_payments_test?schema=public
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -56,14 +56,15 @@ jobs:
         run: npm run test:cov
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage
           path: coverage/
 
       # Skipped automatically until SONAR_TOKEN is configured in the repo secrets.
-      - name: SonarCloud scan
-        if: ${{ env.SONAR_TOKEN != '' }}
+      - name: SonarQube Cloud scan
+        if: ${{ secrets.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io

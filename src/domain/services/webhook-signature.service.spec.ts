@@ -26,7 +26,10 @@ describe('WebhookSignatureService', () => {
   describe('resolveProperty', () => {
     it('reads a nested path', () => {
       expect(
-        WebhookSignatureService.resolveProperty(buildData(), 'transaction.status'),
+        WebhookSignatureService.resolveProperty(
+          buildData(),
+          'transaction.status',
+        ),
       ).toBe('APPROVED');
     });
 
@@ -41,12 +44,17 @@ describe('WebhookSignatureService', () => {
 
     it('returns an empty string for a missing path', () => {
       expect(
-        WebhookSignatureService.resolveProperty(buildData(), 'transaction.nope'),
+        WebhookSignatureService.resolveProperty(
+          buildData(),
+          'transaction.nope',
+        ),
       ).toBe('');
     });
 
     it('returns an empty string when the payload is not an object', () => {
-      expect(WebhookSignatureService.resolveProperty(null, 'transaction.id')).toBe('');
+      expect(
+        WebhookSignatureService.resolveProperty(null, 'transaction.id'),
+      ).toBe('');
     });
   });
 
@@ -121,7 +129,13 @@ describe('WebhookSignatureService', () => {
 
     it('rejects a checksum of a different length', () => {
       expect(
-        WebhookSignatureService.isValid(buildData(), PROPERTIES, TIMESTAMP, SECRET, 'abc'),
+        WebhookSignatureService.isValid(
+          buildData(),
+          PROPERTIES,
+          TIMESTAMP,
+          SECRET,
+          'abc',
+        ),
       ).toBe(false);
     });
   });

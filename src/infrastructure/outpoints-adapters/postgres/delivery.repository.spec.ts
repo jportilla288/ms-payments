@@ -1,4 +1,6 @@
 import { PostgresDeliveryRepository } from './delivery.repository';
+import { mockPrismaDelegate } from '../../../test-support/mocks';
+import type { PrismaService } from './prisma.service';
 import { DomainErrorCode } from '../../../domain/errors/domain-error';
 import { DeliveryStatusEnum } from '../../../domain/resources/delivery-status.enum';
 
@@ -31,18 +33,17 @@ const command = {
 };
 
 describe('PostgresDeliveryRepository', () => {
-  let prisma: any;
+  let prisma: { delivery: ReturnType<typeof mockPrismaDelegate> };
   let repository: PostgresDeliveryRepository;
 
   beforeEach(() => {
-    prisma = {
-      delivery: {
-        create: jest.fn().mockResolvedValue(row),
-        findUnique: jest.fn().mockResolvedValue(row),
-        update: jest.fn().mockResolvedValue({ ...row, status: 'ASSIGNED' }),
-      },
-    };
-    repository = new PostgresDeliveryRepository(prisma);
+    prisma = { delivery: mockPrismaDelegate() };
+    prisma.delivery.create.mockResolvedValue(row);
+    prisma.delivery.findUnique.mockResolvedValue(row);
+    prisma.delivery.update.mockResolvedValue({ ...row, status: 'ASSIGNED' });
+    repository = new PostgresDeliveryRepository(
+      prisma as unknown as PrismaService,
+    );
   });
 
   it('creates deliveries in PENDING and defaults the postal code to null', async () => {
@@ -52,7 +53,7 @@ describe('PostgresDeliveryRepository', () => {
       data: expect.objectContaining({
         status: DeliveryStatusEnum.PENDING,
         postalCode: null,
-      }),
+      }) as unknown,
     });
   });
 
@@ -65,11 +66,16 @@ describe('PostgresDeliveryRepository', () => {
   it('returns null when no delivery matches', async () => {
     prisma.delivery.findUnique.mockResolvedValue(null);
 
-    expect((await repository.findByTransactionId('x'))._unsafeUnwrap()).toBeNull();
+    expect(
+      (await repository.findByTransactionId('x'))._unsafeUnwrap(),
+    ).toBeNull();
   });
 
   it('moves the delivery to ASSIGNED', async () => {
-    const result = await repository.updateStatus('tx-1', DeliveryStatusEnum.ASSIGNED);
+    const result = await repository.updateStatus(
+      'tx-1',
+      DeliveryStatusEnum.ASSIGNED,
+    );
 
     expect(result._unsafeUnwrap().status).toBe(DeliveryStatusEnum.ASSIGNED);
   });
@@ -77,8 +83,13 @@ describe('PostgresDeliveryRepository', () => {
   it('converts a driver failure into a persistence error', async () => {
     prisma.delivery.update.mockRejectedValue(new Error('row locked'));
 
-    const result = await repository.updateStatus('tx-1', DeliveryStatusEnum.SHIPPED);
+    const result = await repository.updateStatus(
+      'tx-1',
+      DeliveryStatusEnum.SHIPPED,
+    );
 
-    expect(result._unsafeUnwrapErr().code).toBe(DomainErrorCode.PERSISTENCE_ERROR);
+    expect(result._unsafeUnwrapErr().code).toBe(
+      DomainErrorCode.PERSISTENCE_ERROR,
+    );
   });
 });

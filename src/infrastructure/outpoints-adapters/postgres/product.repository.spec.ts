@@ -1,4 +1,6 @@
 import { PostgresProductRepository } from './product.repository';
+import { mockPrismaDelegate } from '../../../test-support/mocks';
+import type { PrismaService } from './prisma.service';
 import { DomainErrorCode } from '../../../domain/errors/domain-error';
 
 const row = {
@@ -13,25 +15,26 @@ const row = {
 };
 
 describe('PostgresProductRepository', () => {
-  let prisma: any;
+  let prisma: { product: ReturnType<typeof mockPrismaDelegate> };
   let repository: PostgresProductRepository;
 
   beforeEach(() => {
-    prisma = {
-      product: {
-        findMany: jest.fn().mockResolvedValue([row]),
-        findUnique: jest.fn().mockResolvedValue(row),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-      },
-    };
-    repository = new PostgresProductRepository(prisma);
+    prisma = { product: mockPrismaDelegate() };
+    prisma.product.findMany.mockResolvedValue([row]);
+    prisma.product.findUnique.mockResolvedValue(row);
+    prisma.product.updateMany.mockResolvedValue({ count: 1 });
+    repository = new PostgresProductRepository(
+      prisma as unknown as PrismaService,
+    );
   });
 
   it('maps rows to domain models', async () => {
     const result = await repository.findAll();
 
     expect(result._unsafeUnwrap()[0].priceInCents).toBe(100_000);
-    expect(prisma.product.findMany).toHaveBeenCalledWith({ orderBy: { name: 'asc' } });
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      orderBy: { name: 'asc' },
+    });
   });
 
   it('returns null when the product is missing', async () => {
@@ -45,7 +48,9 @@ describe('PostgresProductRepository', () => {
 
     const result = await repository.findAll();
 
-    expect(result._unsafeUnwrapErr().code).toBe(DomainErrorCode.PERSISTENCE_ERROR);
+    expect(result._unsafeUnwrapErr().code).toBe(
+      DomainErrorCode.PERSISTENCE_ERROR,
+    );
     expect(result._unsafeUnwrapErr().message).toContain('connection lost');
   });
 
@@ -63,6 +68,8 @@ describe('PostgresProductRepository', () => {
 
     const result = await repository.decrementStock('prod-1', 99);
 
-    expect(result._unsafeUnwrapErr().code).toBe(DomainErrorCode.INSUFFICIENT_STOCK);
+    expect(result._unsafeUnwrapErr().code).toBe(
+      DomainErrorCode.INSUFFICIENT_STOCK,
+    );
   });
 });

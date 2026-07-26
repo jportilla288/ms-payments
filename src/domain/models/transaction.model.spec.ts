@@ -13,15 +13,21 @@ describe('Transaction', () => {
   });
 
   it('is approved only in the APPROVED state', () => {
-    expect(aTransaction(TransactionStatusEnum.APPROVED).wasApproved()).toBe(true);
-    expect(aTransaction(TransactionStatusEnum.DECLINED).wasApproved()).toBe(false);
+    expect(aTransaction(TransactionStatusEnum.APPROVED).wasApproved()).toBe(
+      true,
+    );
+    expect(aTransaction(TransactionStatusEnum.DECLINED).wasApproved()).toBe(
+      false,
+    );
   });
 
   it('keeps the amount breakdown consistent with the total', () => {
     const { amounts } = aTransaction();
 
     expect(
-      amounts.productAmountInCents + amounts.baseFeeInCents + amounts.deliveryFeeInCents,
+      amounts.productAmountInCents +
+        amounts.baseFeeInCents +
+        amounts.deliveryFeeInCents,
     ).toBe(amounts.amountInCents);
   });
 });

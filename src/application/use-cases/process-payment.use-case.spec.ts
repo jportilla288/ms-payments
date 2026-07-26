@@ -2,46 +2,56 @@ import { errAsync, okAsync } from 'neverthrow';
 import { ProcessPaymentUseCase } from './process-payment.use-case';
 import { DomainError, DomainErrorCode } from '../../domain/errors/domain-error';
 import { TransactionStatusEnum } from '../../domain/resources/transaction-status.enum';
+import type { TransactionFulfillmentService } from '../services/transaction-fulfillment.service';
 import { aCard, aCustomer, aTransaction } from '../../test-support/builders';
+import {
+  mockCustomerRepository,
+  mockFulfillmentService,
+  mockPaymentGateway,
+  mockTransactionRepository,
+} from '../../test-support/mocks';
 
 describe('ProcessPaymentUseCase', () => {
-  let transactionRepository: any;
-  let customerRepository: any;
-  let paymentGateway: any;
-  let fulfillment: any;
+  let transactionRepository: ReturnType<typeof mockTransactionRepository>;
+  let customerRepository: ReturnType<typeof mockCustomerRepository>;
+  let paymentGateway: ReturnType<typeof mockPaymentGateway>;
+  let fulfillment: ReturnType<typeof mockFulfillmentService>;
   let useCase: ProcessPaymentUseCase;
 
   beforeEach(() => {
-    transactionRepository = {
-      findById: jest.fn().mockReturnValue(okAsync(aTransaction())),
-    };
-    customerRepository = {
-      findById: jest.fn().mockReturnValue(okAsync(aCustomer())),
-    };
-    paymentGateway = {
-      charge: jest.fn().mockReturnValue(
-        okAsync({
-          gatewayTransactionId: 'gw-1',
-          status: TransactionStatusEnum.APPROVED,
-          statusMessage: null,
-        }),
-      ),
-    };
-    fulfillment = {
-      apply: jest
-        .fn()
-        .mockReturnValue(okAsync(aTransaction(TransactionStatusEnum.APPROVED))),
-    };
+    transactionRepository = mockTransactionRepository();
+    transactionRepository.findById.mockReturnValue(okAsync(aTransaction()));
+
+    customerRepository = mockCustomerRepository();
+    customerRepository.findById.mockReturnValue(okAsync(aCustomer()));
+
+    paymentGateway = mockPaymentGateway();
+    paymentGateway.charge.mockReturnValue(
+      okAsync({
+        gatewayTransactionId: 'gw-1',
+        status: TransactionStatusEnum.APPROVED,
+        statusMessage: null,
+      }),
+    );
+
+    fulfillment = mockFulfillmentService();
+    fulfillment.apply.mockReturnValue(
+      okAsync(aTransaction(TransactionStatusEnum.APPROVED)),
+    );
 
     useCase = new ProcessPaymentUseCase(
       transactionRepository,
       customerRepository,
       paymentGateway,
-      fulfillment,
+      fulfillment as unknown as TransactionFulfillmentService,
     );
   });
 
-  const input = () => ({ transactionId: 'tx-1', card: aCard(), installments: 1 });
+  const input = () => ({
+    transactionId: 'tx-1',
+    card: aCard(),
+    installments: 1,
+  });
 
   it('charges the gateway and applies the outcome', async () => {
     const result = await useCase.execute(input());
@@ -62,7 +72,9 @@ describe('ProcessPaymentUseCase', () => {
 
     const result = await useCase.execute(input());
 
-    expect(result._unsafeUnwrapErr().code).toBe(DomainErrorCode.TRANSACTION_NOT_FOUND);
+    expect(result._unsafeUnwrapErr().code).toBe(
+      DomainErrorCode.TRANSACTION_NOT_FOUND,
+    );
     expect(paymentGateway.charge).not.toHaveBeenCalled();
   });
 
@@ -83,11 +95,15 @@ describe('ProcessPaymentUseCase', () => {
 
     const result = await useCase.execute(input());
 
-    expect(result._unsafeUnwrapErr().code).toBe(DomainErrorCode.PERSISTENCE_ERROR);
+    expect(result._unsafeUnwrapErr().code).toBe(
+      DomainErrorCode.PERSISTENCE_ERROR,
+    );
   });
 
   it('marks the transaction as ERROR when the gateway is unreachable', async () => {
-    paymentGateway.charge.mockReturnValue(errAsync(DomainError.gateway('timeout')));
+    paymentGateway.charge.mockReturnValue(
+      errAsync(DomainError.gateway('timeout')),
+    );
     fulfillment.apply.mockReturnValue(
       okAsync(aTransaction(TransactionStatusEnum.ERROR)),
     );

@@ -3,7 +3,12 @@ import { errAsync, okAsync } from 'neverthrow';
 import { TransactionsController } from './transactions.controller';
 import { DomainError } from '../../../../domain/errors/domain-error';
 import { TransactionStatusEnum } from '../../../../domain/resources/transaction-status.enum';
-import { aCard, aDelivery, aProduct, aTransaction } from '../../../../test-support/builders';
+import {
+  aCard,
+  aDelivery,
+  aProduct,
+  aTransaction,
+} from '../../../../test-support/builders';
 
 describe('TransactionsController', () => {
   const createTransaction = { execute: jest.fn() };
@@ -55,7 +60,7 @@ describe('TransactionsController', () => {
     const response = await controller.pay('tx-1', {
       card: aCard(),
       installments: 1,
-    } as never);
+    });
 
     expect(response.status).toBe(TransactionStatusEnum.APPROVED);
   });
@@ -72,7 +77,7 @@ describe('TransactionsController', () => {
     );
 
     await expect(
-      controller.pay('tx-1', { card: aCard(), installments: 1 } as never),
+      controller.pay('tx-1', { card: aCard(), installments: 1 }),
     ).rejects.toBeInstanceOf(HttpException);
   });
 });
