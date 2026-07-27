@@ -196,7 +196,13 @@ it notifies `POST /api/webhooks/payments`. Both paths converge on the same
 
 ## API reference
 
-Interactive Swagger UI: **`/api/docs`** (OpenAPI JSON at `/api/docs-json`).
+Interactive Swagger UI, publicly available:
+
+- **<https://ms-payments-1.onrender.com/api/docs>**
+- OpenAPI JSON: <https://ms-payments-1.onrender.com/api/docs-json>
+
+> First request may take up to ~50 seconds: Render's free tier suspends the
+> service after 15 minutes of inactivity and needs to wake it up.
 
 | Method | Endpoint                        | Description                                     |
 | ------ | ------------------------------- | ----------------------------------------------- |
@@ -317,10 +323,22 @@ All files                                            |   98.68 |    86.32 |   96
 
 ## Deployment
 
-<!-- Add the public URL once deployed. -->
+| Component  | Provider      | URL                                              |
+| ---------- | ------------- | ------------------------------------------------ |
+| API        | Render        | <https://ms-payments-1.onrender.com>             |
+| Swagger    | Render        | <https://ms-payments-1.onrender.com/api/docs>    |
+| SPA        | Render        | <https://fe-payments.onrender.com>               |
+| Database   | Neon          | Managed PostgreSQL 17 (`us-west-2`)              |
 
-| Component | Provider | URL |
-| --------- | -------- | --- |
-| API       |          |     |
-| SPA       |          |     |
-| Database  |          |     |
+Frontend repository: <https://github.com/jportilla288/fe-payments>
+
+### Notes for reviewers
+
+- **Cold start.** The free Render instance sleeps after 15 minutes idle, so the
+  first request of a session can take ~50 seconds. Subsequent requests are fast.
+- **Branch strategy.** `feature/*` → `dev` → `qa` → `uat` → `main`. Production
+  deploys from `main` on every merge.
+- **Test cards.** `4242 4242 4242 4242` (VISA) and `5555 5555 5555 4444`
+  (Mastercard) pass validation. A random number is rejected by the Luhn check.
+- **Environment.** All secrets are injected as environment variables in Render;
+  nothing sensitive is committed. See `.env.example` for the full list.
