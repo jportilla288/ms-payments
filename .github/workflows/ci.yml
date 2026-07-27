@@ -46,15 +46,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Project scripts instead of npx: nothing is fetched on demand.
       - name: Generate Prisma client
-        run: npx prisma generate
+        run: npm run prisma:generate
 
       - name: Apply migrations
-        run: npx prisma migrate deploy
+        run: npm run prisma:deploy
 
       # Runs eslint without --fix: CI must report problems, not silently patch them.
       - name: Lint
-        run: npx eslint src test --max-warnings=0
+        run: npm run lint:ci
 
       - name: Unit tests with coverage
         run: npm run test:cov
